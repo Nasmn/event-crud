@@ -9,7 +9,6 @@ class EventController extends Controller
 {
     public function index(){
         $data = Event::get();
-        // return $data;
         return view('event-list', compact('data'));
     }
     public function addEvent(){
@@ -63,7 +62,10 @@ class EventController extends Controller
         return redirect('/')->with('success', 'Event Updated Successfully');
     }
     public function deleteEvent($id){
-        Event::where('id', '=', $id)->delete();
-        return redirect()->back()->with('success', 'Event deleted Successfully');
+        Event::where('id',$id)->delete();
+
+        return response()->json([
+            'result'=>'Record Deleted Successfully'
+        ]);
     }
 }
