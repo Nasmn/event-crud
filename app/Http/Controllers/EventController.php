@@ -4,68 +4,109 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Event;
+use Yajra\DataTables\DataTables;
 
 class EventController extends Controller
 {
-    public function index(){
-        $data = Event::get();
-        return view('event-list', compact('data'));
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $req)
+    {
+        $events = Event::get();
+        if($req->ajax()){
+          $allData = DataTables::of($events)
+          ->addIndexColumn()
+          ->addColumn('action', function($row){
+                $btn = '<a href="javascript:void(0)" data-toggle="tooltip" data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editEvent">Edit</a>';
+                $btn.='<a href="javascript:void(0)" data-toggle="tooltip" data-id="'.$row->id.'" data-original-title="Delete" class="edit btn btn-danger btn-sm deleteEvent">Delete</a>';
+                return $btn;
+          })
+          ->rawColumns(['action'])
+          ->make(true);
+          return $allData;
+        }
+        return view('events', compact('events'));
     }
-    public function addEvent(){
-        return view('add-event');
-    }
-    public function saveEvent(Request $request){
-        $request->validate([
-            'title' =>'required',
-            'desc' =>'required',
-            'sdate'=> 'date|required',
-            'edate'=> 'required|date|after_or_equal:sdate',
-            'remarks'=>'nullable'
-        ]);
 
-        $event = new Event();
-        $event->title = $request->title;
-        $event->description = $request->desc;
-        $event->start_date = $request->sdate;
-        $event->end_date = $request->edate;
-        $event->remarks = $request->remarks;
-        $event->save(); 
-        return redirect('/')->with('success', 'Event added Successfully');
-    }
-    public function editEvent($id){
-        $data = Event::where('id','=',$id)->first();
-        // return $data;
-        return view('edit-event', compact('data'));
-    }
-    public function updateEvent(Request $request){
-        $request->validate([
-            'title' =>'required',
-            'desc' =>'required',
-            'sdate'=> 'date|required',
-            'edate'=> 'required|date|after_or_equal:sdate',
-            'remarks'=>'nullable'
-        ]);
-        $id = $request->id;
-        $title = $request->title;
-        $desc = $request->desc;
-        $start_date = $request->sdate;
-        $end_date = $request->edate;
-        $remarks = $request->remarks;
+    
 
-        Event::where('id','=',$id)->update([
-            'title'=>$title,
-            'description'=>$desc,
-            'start_date'=>$start_date,
-            'end_date'=>$end_date,
-            'remarks'=>$remarks
-        ]);
-        return redirect('/')->with('success', 'Event Updated Successfully');
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
     }
-    public function deleteEvent($id){
-        Event::where('id',$id)->delete();
 
-        return response()->json([
-            'result'=>'Record Deleted Successfully'
-        ]);
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        Event::updateOrCreate(['id'=>$request->event_id],
+        [
+            'title'=>$request->title,
+            'description'=>$request->desc,
+            'start_date'=>$request->sDate,
+            'end_date'=>$request->eDate,
+            'remarks'=>$request->remarks
+        ]
+    );
+        return response()->json(['success'=>'Event Added Successfully']);
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        $events = Event::find($id);
+        return response()->json($events);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        Event::find($id)->delete();
+        return response()->json(['success'=>'Event Deleted Successfully']);
     }
 }
